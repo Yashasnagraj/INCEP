@@ -1,0 +1,3 @@
+@echo off
+echo Starting Roboflow Pain Detection Microservice...
+python app.py

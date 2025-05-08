@@ -1,13 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
-import "./hi.css"; // Ensure hi.css contains your styles
+import { Send, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 
-function ChatBoxOffline() {
+function ChatBoxOffline({ onClose }) {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    {
+      type: "bot",
+      content: "Hello! I'm Sakhi, your offline AI assistant powered by GPT4All Falcon. I can help you with health-related questions even when you're offline. How can I assist you today?"
+    }
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -17,8 +23,13 @@ function ChatBoxOffline() {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  useEffect(() => {
+    // Focus the input field when the component mounts
+    inputRef.current?.focus();
+  }, []);
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     setIsLoading(true);
     const userMessage = input;
@@ -28,55 +39,50 @@ function ChatBoxOffline() {
     setMessages((prev) => [...prev, { type: "user", content: userMessage }]);
 
     try {
-      const res = await axios.post("https://advaya-maatrcare-node.onrender.com/chat", {
-        prompt: userMessage,
+      // Call GPT4All API
+      const response = await axios.post("http://localhost:5000/chat", {
+        prompt: `You are Sakhi, a caring and supportive AI assistant specialized in pregnancy care. The user has asked: "${userMessage}". Please respond with empathy, accurate information, and helpful advice related to pregnancy care. If the question involves medical conditions or diagnosis, kindly remind the user to consult a healthcare provider for professional guidance. Keep your tone warm and friendly, and your response concise and easy to understand.`
       });
+
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+
       setMessages((prev) => [
         ...prev,
-        { type: "bot", content: res.data.response },
+        { type: "bot", content: response.data.response },
       ]);
     } catch (error) {
+      console.error("Error:", error.message);
       setMessages((prev) => [
         ...prev,
         {
           type: "error",
-          content: "Sorry, Sakhi couldn't process your request.",
+          content: "I apologize, but I'm having trouble processing your request. Please try again or check if the offline model is properly loaded.",
         },
       ]);
-      console.error("Error:", error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
       sendMessage();
     }
   };
 
   // Animation variants
   const containerVariants = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
-      transition: {
-        duration: 0.5,
-        when: "beforeChildren",
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const headerVariants = {
-    hidden: { y: -50, opacity: 0 },
-    visible: {
       y: 0,
-      opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 100,
-        damping: 15
+        damping: 15,
+        stiffness: 100
       }
     }
   };
@@ -89,8 +95,8 @@ function ChatBoxOffline() {
       scale: 1,
       transition: {
         type: "spring",
-        stiffness: 100,
-        damping: 10
+        damping: 15,
+        stiffness: 200
       }
     },
     exit: {
@@ -100,243 +106,187 @@ function ChatBoxOffline() {
     }
   };
 
-  const inputAreaVariants = {
-    hidden: { y: 50, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15,
-        delay: 0.3
-      }
-    }
-  };
-
-  const emptyStateVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15,
-        delay: 0.2
-      }
-    }
-  };
-
-  const iconVariants = {
-    hidden: { scale: 0 },
-    visible: {
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 200,
-        damping: 15,
-        delay: 0.4
-      }
-    },
-    pulse: {
-      scale: [1, 1.1, 1],
-      transition: {
-        duration: 1.5,
-        repeat: Infinity,
-        repeatType: "loop"
-      }
-    }
-  };
-
   const buttonVariants = {
     hover: {
       scale: 1.05,
-      backgroundColor: "#0056b3",
       transition: {
         type: "spring",
         stiffness: 400,
         damping: 10
       }
     },
-    tap: { scale: 0.95 },
-    disabled: {
-      opacity: 0.6,
-      scale: 1
+    tap: { scale: 0.95 }
+  };
+
+  const inputVariants = {
+    focus: {
+      boxShadow: "0 0 0 3px rgba(75, 85, 99, 0.3)",
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 10
+      }
     }
   };
 
-  const loadingDotsVariants = {
-    hidden: { opacity: 0 },
-    visible: {
+  const typingIndicatorVariants = {
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
       opacity: 1,
+      y: 0,
       transition: {
-        staggerChildren: 0.2
+        duration: 0.3
+      }
+    },
+    exit: {
+      opacity: 0,
+      y: 10,
+      transition: {
+        duration: 0.3
       }
     }
   };
 
   const dotVariants = {
-    hidden: { y: 0, opacity: 0 },
-    visible: {
-      y: [0, -10, 0],
-      opacity: 1,
+    initial: { y: 0 },
+    animate: {
+      y: [0, -5, 0],
       transition: {
         repeat: Infinity,
-        duration: 0.8
+        repeatType: "loop",
+        duration: 0.6,
+        ease: "easeInOut"
       }
     }
   };
 
   return (
-    <motion.div
-      className="app-container"
+    <motion.div 
+      className="w-96 bg-white rounded-lg shadow-xl border border-gray-200"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      <motion.header className="app-header" variants={headerVariants}>
-        <motion.h1 
-          className="app-title"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          Sakhi
-        </motion.h1>
-        <motion.p 
-          className="app-subtitle"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          Your Friendly Health Companion
-        </motion.p>
-      </motion.header>
+      {/* Header */}
+      <div className="bg-gray-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+        <h3 className="font-semibold">Offline Assistant (GPT4All Falcon)</h3>
+        <button onClick={onClose} className="hover:text-gray-200">
+          <X size={20} />
+        </button>
+      </div>
 
-      <motion.div 
-        className="chat-container"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
-        {messages.length === 0 ? (
-          <motion.div 
-            className="empty-state"
-            variants={emptyStateVariants}
-          >
-            <motion.div 
-              className="ai-icon"
-              variants={iconVariants}
+      {/* Chat Messages */}
+      <div className="h-96 overflow-y-auto p-4 space-y-4">
+        <AnimatePresence>
+          {messages.map((message, index) => (
+            <motion.div
+              key={index}
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               initial="hidden"
-              animate={["visible", "pulse"]}
+              animate="visible"
+              exit="exit"
+              variants={messageVariants}
+              custom={index}
             >
-              <span>AI</span>
+              <motion.div
+                className={`max-w-[80%] rounded-lg p-3 ${
+                  message.type === 'user'
+                    ? 'bg-gray-600 text-white'
+                    : message.type === 'error'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                {message.content}
+              </motion.div>
             </motion.div>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
+          ))}
+          
+          {isLoading && (
+            <motion.div
+              className="flex justify-start"
+              variants={typingIndicatorVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
             >
-              Welcome to Sakhi. 
-              Ask any health-related questions to begin your journey.
-            </motion.p>
-          </motion.div>
-        ) : (
-          <div className="messages-list">
-            <AnimatePresence>
-              {messages.map((msg, index) => (
-                <motion.div
-                  key={index}
-                  className={`message-wrapper ${
-                    msg.type === "user" ? "user-message" : "bot-message"
-                  }`}
-                  variants={messageVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  layout
-                >
-                  <motion.div
-                    className={`message ${
-                      msg.type === "user"
-                        ? "user"
-                        : msg.type === "error"
-                        ? "error"
-                        : "bot"
-                    }`}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  >
-                    {msg.content}
-                  </motion.div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            
-            <AnimatePresence>
-              {isLoading && (
-                <motion.div 
-                  className="message-wrapper bot-message"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="message bot loading">
-                    <motion.div 
-                      className="loading-dots"
-                      variants={loadingDotsVariants}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <motion.div className="dot" variants={dotVariants}></motion.div>
-                      <motion.div className="dot" variants={dotVariants}></motion.div>
-                      <motion.div className="dot" variants={dotVariants}></motion.div>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </motion.div>
+              <motion.div
+                className="bg-gray-100 text-gray-800 rounded-lg p-3"
+              >
+                <div className="flex space-x-1">
+                  <motion.div 
+                    className="w-2 h-2 bg-gray-600 rounded-full"
+                    variants={dotVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={0}
+                  />
+                  <motion.div 
+                    className="w-2 h-2 bg-gray-600 rounded-full"
+                    variants={dotVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={1}
+                    transition={{ delay: 0.1 }}
+                  />
+                  <motion.div 
+                    className="w-2 h-2 bg-gray-600 rounded-full"
+                    variants={dotVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={2}
+                    transition={{ delay: 0.2 }}
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <div ref={messagesEndRef} />
+      </div>
 
-      <motion.div 
-        className="input-area"
-        variants={inputAreaVariants}
-      >
-        <div className="input-container">
+      {/* Input Area */}
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex space-x-2">
           <motion.input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your health question..."
-            className="message-input"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-            whileFocus={{ boxShadow: "0 0 0 2px rgba(0, 123, 255, 0.25)" }}
+            placeholder="Type your message..."
+            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none"
+            disabled={isLoading}
+            variants={inputVariants}
+            whileFocus="focus"
           />
           <motion.button
             onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
-            className={`send-button ${
-              isLoading || !input.trim() ? "disabled" : ""
+            disabled={isLoading}
+            className={`bg-gray-600 text-white p-2 rounded-lg hover:bg-gray-700 focus:outline-none ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             variants={buttonVariants}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            whileHover={!isLoading && input.trim() ? "hover" : "disabled"}
-            whileTap={!isLoading && input.trim() ? "tap" : "disabled"}
+            whileHover={!isLoading ? "hover" : undefined}
+            whileTap={!isLoading ? "tap" : undefined}
           >
-            {isLoading ? "Sending..." : "Send"}
+            {isLoading ? (
+              <motion.div 
+                className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+              />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
           </motion.button>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

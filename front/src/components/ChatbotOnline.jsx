@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare, X } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ChatBox = () => {
+const ChatBox = ({ onClose }) => {
   const [messages, setMessages] = useState([
     {
       text: "Hello! I'm Sakhi, your pregnancy care assistant. How can I help you today?",
@@ -17,8 +17,8 @@ const ChatBox = () => {
   const inputRef = useRef(null);
 
   // Initialize Gemini API
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  const genAI = new GoogleGenerativeAI("AIzaSyB_O1fqC9p9lHyUOekT3w2mQSFhQ-lzBgA");
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -162,103 +162,92 @@ Keep your tone warm and friendly, and your response concise and easy to understa
 
   return (
     <motion.div 
-      className="max-w-4xl mx-auto"
+      className="w-96 bg-white rounded-lg shadow-xl border border-gray-200"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      <motion.div 
-        className="text-center mb-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
-        <h2 className="text-3xl font-extrabold text-gray-900">
-          Chat with Sakhi
-        </h2>
-        <p className="mt-2 text-lg text-gray-600">
-          Your AI companion for pregnancy care
-        </p>
-      </motion.div>
-      
-      <motion.div 
-        className="bg-white rounded-lg shadow-lg p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-      >
-        <div className="h-96 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
-          <AnimatePresence>
-            {messages.map((message, index) => (
+      {/* Header */}
+      <div className="bg-rose-500 text-white p-4 rounded-t-lg flex justify-between items-center">
+        <h3 className="font-semibold">Chat with Sakhi</h3>
+        <button onClick={onClose} className="hover:text-gray-200">
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="h-96 overflow-y-auto p-4 space-y-4">
+        <AnimatePresence>
+          {messages.map((message, index) => (
+            <motion.div
+              key={index}
+              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={messageVariants}
+              custom={index}
+            >
               <motion.div
-                key={index}
-                className={`mb-4 ${
-                  message.isUser ? 'text-right' : 'text-left'
+                className={`max-w-[80%] rounded-lg p-3 ${
+                  message.isUser
+                    ? 'bg-rose-500 text-white'
+                    : 'bg-gray-100 text-gray-800'
                 }`}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={messageVariants}
-                custom={index}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                <motion.div
-                  className={`inline-block p-3 rounded-lg max-w-[80%] ${
-                    message.isUser
-                      ? 'bg-rose-500 text-white'
-                      : 'bg-gray-200 text-gray-800'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  {message.text}
-                </motion.div>
+                {message.text}
               </motion.div>
-            ))}
-            
-            {isTyping && (
+            </motion.div>
+          ))}
+          
+          {isTyping && (
+            <motion.div
+              className="flex justify-start"
+              variants={typingIndicatorVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
               <motion.div
-                className="mb-4 text-left"
-                variants={typingIndicatorVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
+                className="bg-gray-100 text-gray-800 rounded-lg p-3"
               >
-                <motion.div
-                  className="inline-block p-3 rounded-lg bg-gray-200 text-gray-800"
-                >
-                  <div className="flex space-x-1">
-                    <motion.div 
-                      className="w-2 h-2 bg-gray-600 rounded-full"
-                      variants={dotVariants}
-                      initial="initial"
-                      animate="animate"
-                      custom={0}
-                    />
-                    <motion.div 
-                      className="w-2 h-2 bg-gray-600 rounded-full"
-                      variants={dotVariants}
-                      initial="initial"
-                      animate="animate"
-                      custom={1}
-                      transition={{ delay: 0.1 }}
-                    />
-                    <motion.div 
-                      className="w-2 h-2 bg-gray-600 rounded-full"
-                      variants={dotVariants}
-                      initial="initial"
-                      animate="animate"
-                      custom={2}
-                      transition={{ delay: 0.2 }}
-                    />
-                  </div>
-                </motion.div>
+                <div className="flex space-x-1">
+                  <motion.div 
+                    className="w-2 h-2 bg-gray-600 rounded-full"
+                    variants={dotVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={0}
+                  />
+                  <motion.div 
+                    className="w-2 h-2 bg-gray-600 rounded-full"
+                    variants={dotVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={1}
+                    transition={{ delay: 0.1 }}
+                  />
+                  <motion.div 
+                    className="w-2 h-2 bg-gray-600 rounded-full"
+                    variants={dotVariants}
+                    initial="initial"
+                    animate="animate"
+                    custom={2}
+                    transition={{ delay: 0.2 }}
+                  />
+                </div>
               </motion.div>
-            )}
-          </AnimatePresence>
-          <div ref={messagesEndRef} />
-        </div>
-        <div className="flex">
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area */}
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex space-x-2">
           <motion.input
             ref={inputRef}
             type="text"
@@ -266,7 +255,7 @@ Keep your tone warm and friendly, and your response concise and easy to understa
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Type your message..."
-            className="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none"
+            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none"
             disabled={isLoading}
             variants={inputVariants}
             whileFocus="focus"
@@ -274,7 +263,7 @@ Keep your tone warm and friendly, and your response concise and easy to understa
           <motion.button
             onClick={handleSend}
             disabled={isLoading}
-            className={`bg-rose-500 text-white p-2 rounded-r-lg hover:bg-rose-600 focus:outline-none ${
+            className={`bg-rose-500 text-white p-2 rounded-lg hover:bg-rose-600 focus:outline-none ${
               isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             variants={buttonVariants}
@@ -292,7 +281,7 @@ Keep your tone warm and friendly, and your response concise and easy to understa
             )}
           </motion.button>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 };

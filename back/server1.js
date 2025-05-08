@@ -4,9 +4,11 @@ const http = require("http");
 const cors = require("cors");
 const WebSocket = require("ws");
 const mongoose = require("mongoose");
+const axios = require("axios");
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 // Add a redirect from root to dashboard
 app.get("/", (req, res) => {
@@ -421,6 +423,35 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+app.post("/chat", async (req, res) => {
+  try {
+      const { prompt } = req.body;
+
+      // Call Flask API
+      const response = await axios.post("http://127.0.0.1:5000/chat", { prompt });
+
+      res.json(response.data);
+  } catch (error) {
+      console.error("Error:", error.message);
+      res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Add offline chat endpoint
+app.post("/api/chat/offline", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    
+    // Call GPT4All API
+    const response = await axios.post("http://localhost:5000/chat", { prompt });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error in offline chat:", error);
+    res.status(500).json({ error: "Failed to process chat request" });
+  }
+});
 
 // Connect to MongoDB (if needed)
 mongoose

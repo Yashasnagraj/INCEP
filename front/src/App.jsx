@@ -17,6 +17,7 @@ import DoctorFiles from "./components/DoctorFiles";
 import DoctorLogin from "./pages/DoctorLogin";
 import PatientLogin from "./pages/Login";
 import DoctorDashboardtele from "./components/DoctorDashboardtele";
+import FloatingChatButton from "./components/FloatingChatButton";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
             {/* Testing Routes */}
             <Route path="/test-mediapipe" element={<TestMediaPipe />} />
           </Routes>
+          <FloatingChatButton />
         </PeerProvider>
       </SocketProvider>
     </div>

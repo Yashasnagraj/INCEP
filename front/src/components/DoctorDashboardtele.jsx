@@ -1,28 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSocket } from './Socket';
 import { useNavigate } from 'react-router-dom';
-import { handleerror } from '../pages/toast';
 
 function DoctorDashboard() {
   const { socket, isConnected } = useSocket();
   const navigate = useNavigate();
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [doctorName, setDoctorName] = useState('');
-
-  // Check if doctor is logged in
-  useEffect(() => {
-    const token = localStorage.getItem('doctorToken');
-    const name = localStorage.getItem('doctorName');
-    
-    if (!token) {
-      handleerror('Please login to access the doctor dashboard');
-      navigate('/doctor/login');
-      return;
-    }
-    
-    setDoctorName(name || 'Doctor');
-  }, [navigate]);
 
   useEffect(() => {
     // If socket is not available or not connected yet, return early
@@ -114,61 +98,9 @@ function DoctorDashboard() {
     );
   }
 
-  const handleViewFiles = () => {
-    navigate('/doctor/files');
-  };
-
-  const handleRequestRecords = () => {
-    navigate('/doctor/request-access');
-  };
-  
-  const handleLogout = () => {
-    localStorage.removeItem('doctorToken');
-    localStorage.removeItem('doctorId');
-    localStorage.removeItem('doctorName');
-    localStorage.removeItem('doctorEmail');
-    localStorage.removeItem('userType');
-    localStorage.removeItem('role');
-    navigate('/');
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md">
-        <div className="max-w-6xl mx-auto p-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Doctor Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              <span className="font-medium">Welcome, {doctorName}</span>
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1 bg-white text-indigo-700 rounded-md hover:bg-gray-100 text-sm font-medium"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-800">Consultation Requests</h2>
-          <div className="flex space-x-4">
-            <button
-              onClick={handleViewFiles}
-              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-            >
-              View Patient Files
-            </button>
-            <button
-              onClick={handleRequestRecords}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Request Records
-            </button>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8 text-gray-800">Consultation Requests</h1>
       
       <div className="grid gap-6">
         {consultations.length === 0 ? (
@@ -227,7 +159,6 @@ function DoctorDashboard() {
             </div>
           ))
         )}
-        </div>
       </div>
     </div>
   );
